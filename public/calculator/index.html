@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Anil Calculator</title>
+  <meta name="description" content="Anil Calculator — a fast, lightweight, mobile-friendly calculator. Made by Anil." />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #1e293b;
+      --display-bg: #0b1220;
+      --text: #f8fafc;
+      --text-dim: #94a3b8;
+      --key: #334155;
+      --key-hover: #475569;
+      --key-active: #1e293b;
+      --op: #3b82f6;
+      --op-hover: #2563eb;
+      --accent: #f59e0b;
+      --accent-hover: #d97706;
+      --danger: #ef4444;
+      --danger-hover: #dc2626;
+      --radius: 18px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+    html, body { height: 100%; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100dvh;
+      padding: 16px;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 360px;
+      background: var(--panel);
+      border-radius: 24px;
+      padding: 20px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
+
+    .calc-name {
+      text-align: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 12px;
+    }
+
+    .display {
+      background: var(--display-bg);
+      border-radius: var(--radius);
+      padding: 20px 18px;
+      margin-bottom: 16px;
+      text-align: right;
+      overflow: hidden;
+    }
+
+    .display .expression {
+      min-height: 1.3em;
+      font-size: 1rem;
+      color: var(--text-dim);
+      white-space: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .display .expression::-webkit-scrollbar { display: none; }
+
+    .display .result {
+      font-size: 2.6rem;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .display .result::-webkit-scrollbar { display: none; }
+
+    .display .result.error { color: var(--danger); font-size: 1.6rem; }
+
+    .keys {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    button.key {
+      border: none;
+      border-radius: var(--radius);
+      background: var(--key);
+      color: var(--text);
+      font-size: 1.4rem;
+      font-weight: 600;
+      height: 64px;
+      cursor: pointer;
+      transition: background 0.12s ease, transform 0.06s ease;
+      user-select: none;
+      touch-action: manipulation;
+    }
+
+    button.key:hover { background: var(--key-hover); }
+    button.key:active, button.key.pressed { background: var(--key-active); transform: scale(0.95); }
+
+    button.key.op { background: var(--op); }
+    button.key.op:hover { background: var(--op-hover); }
+
+    button.key.util { background: var(--accent); color: #1a1207; }
+    button.key.util:hover { background: var(--accent-hover); }
+
+    button.key.clear { background: var(--danger); }
+    button.key.clear:hover { background: var(--danger-hover); }
+
+    button.key.equals { background: var(--op); }
+    button.key.equals:hover { background: var(--op-hover); }
+
+    button.key.zero { grid-column: span 2; }
+
+    footer {
+      margin-top: 20px;
+      font-size: 0.8rem;
+      color: var(--text-dim);
+      text-align: center;
+    }
+
+    @media (max-width: 380px) {
+      button.key { height: 56px; font-size: 1.2rem; }
+      .display .result { font-size: 2.1rem; }
+    }
+  </style>
+</head>
+<body>
+  <main class="calculator" aria-label="Anil Calculator">
+    <div class="calc-name">Anil Calculator</div>
+    <div class="display" role="status" aria-live="polite">
+      <div class="expression" id="expression">&nbsp;</div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="keys">
+      <button class="key clear" data-action="clear" aria-label="All clear">AC</button>
+      <button class="key util" data-action="backspace" aria-label="Backspace">⌫</button>
+      <button class="key util" data-action="percent" aria-label="Percent">%</button>
+      <button class="key op" data-value="/" aria-label="Divide">÷</button>
+
+      <button class="key" data-value="7">7</button>
+      <button class="key" data-value="8">8</button>
+      <button class="key" data-value="9">9</button>
+      <button class="key op" data-value="*" aria-label="Multiply">×</button>
+
+      <button class="key" data-value="4">4</button>
+      <button class="key" data-value="5">5</button>
+      <button class="key" data-value="6">6</button>
+      <button class="key op" data-value="-" aria-label="Subtract">−</button>
+
+      <button class="key" data-value="1">1</button>
+      <button class="key" data-value="2">2</button>
+      <button class="key" data-value="3">3</button>
+      <button class="key op" data-value="+" aria-label="Add">+</button>
+
+      <button class="key zero" data-value="0">0</button>
+      <button class="key" data-value="." aria-label="Decimal point">.</button>
+      <button class="key equals" data-action="equals" aria-label="Equals">=</button>
+    </div>
+  </main>
+  <footer>Made by Anil</footer>
+
+  <script>
+    (function () {
+      "use strict";
+
+      var expressionEl = document.getElementById("expression");
+      var resultEl = document.getElementById("result");
+
+      var current = "0";      // current entry shown in result line
+      var expression = "";    // full expression string
+      var justEvaluated = false;
+
+      function render() {
+        expressionEl.textContent = expression || " ";
+        resultEl.textContent = current;
+        resultEl.classList.remove("error");
+        // keep scrolled to the end
+        resultEl.scrollLeft = resultEl.scrollWidth;
+        expressionEl.scrollLeft = expressionEl.scrollWidth;
+      }
+
+      function showError(msg) {
+        resultEl.textContent = msg;
+        resultEl.classList.add("error");
+        expression = "";
+        current = "0";
+        justEvaluated = true;
+      }
+
+      function lastChar() { return expression.slice(-1); }
+      function isOperator(ch) { return ch === "+" || ch === "-" || ch === "*" || ch === "/"; }
+
+      function inputDigit(d) {
+        if (justEvaluated) { expression = ""; current = "0"; justEvaluated = false; }
+        if (current === "0") current = d;
+        else if (current === "Error") current = d;
+        else current += d;
+        render();
+      }
+
+      function inputDot() {
+        if (justEvaluated) { expression = ""; current = "0"; justEvaluated = false; }
+        if (current.indexOf(".") === -1) current += ".";
+        render();
+      }
+
+      function inputOperator(op) {
+        if (justEvaluated) { expression = current; justEvaluated = false; }
+        else if (current !== "" && current !== "Error") expression += current;
+
+        if (expression === "") {
+          if (op === "-") { current = "-"; render(); return; }
+          return;
+        }
+        if (isOperator(lastChar())) {
+          expression = expression.slice(0, -1) + op;
+        } else {
+          expression += op;
+        }
+        current = "";
+        render();
+        current = "0";
+      }
+
+      function inputPercent() {
+        if (current === "" || current === "Error" || current === "-") return;
+        var val = parseFloat(current) / 100;
+        current = formatNumber(val);
+        justEvaluated = false;
+        render();
+      }
+
+      function backspace() {
+        if (justEvaluated) { clearAll(); return; }
+        if (current.length > 1) current = current.slice(0, -1);
+        else current = "0";
+        render();
+      }
+
+      function clearAll() {
+        expression = "";
+        current = "0";
+        justEvaluated = false;
+        render();
+      }
+
+      function formatNumber(n) {
+        if (!isFinite(n) || isNaN(n)) return "Error";
+        // round to 10 significant decimals to kill float noise
+        var rounded = Math.round(n * 1e10) / 1e10;
+        return String(rounded);
+      }
+
+      // Safe shunting-yard evaluation — no eval()
+      function evaluate(expr) {
+        var tokens = [];
+        var i = 0;
+        while (i < expr.length) {
+          var ch = expr[i];
+          if (isOperator(ch)) {
+            // unary minus
+            if (ch === "-" && (tokens.length === 0 || isOperator(tokens[tokens.length - 1]))) {
+              var num = "-";
+              i++;
+              while (i < expr.length && !isOperator(expr[i])) { num += expr[i]; i++; }
+              tokens.push(parseFloat(num));
+              continue;
+            }
+            tokens.push(ch);
+            i++;
+          } else {
+            var numStr = "";
+            while (i < expr.length && !isOperator(expr[i])) { numStr += expr[i]; i++; }
+            tokens.push(parseFloat(numStr));
+          }
+        }
+
+        var prec = { "+": 1, "-": 1, "*": 2, "/": 2 };
+        var values = [];
+        var ops = [];
+
+        function applyOp() {
+          var op = ops.pop();
+          var b = values.pop();
+          var a = values.pop();
+          if (a === undefined || b === undefined) throw new Error("bad");
+          switch (op) {
+            case "+": values.push(a + b); break;
+            case "-": values.push(a - b); break;
+            case "*": values.push(a * b); break;
+            case "/":
+              if (b === 0) throw new Error("div0");
+              values.push(a / b);
+              break;
+          }
+        }
+
+        for (var t = 0; t < tokens.length; t++) {
+          var tok = tokens[t];
+          if (typeof tok === "number") {
+            if (isNaN(tok)) throw new Error("bad");
+            values.push(tok);
+          } else {
+            while (ops.length && prec[ops[ops.length - 1]] >= prec[tok]) applyOp();
+            ops.push(tok);
+          }
+        }
+        while (ops.length) applyOp();
+        if (values.length !== 1) throw new Error("bad");
+        return values[0];
+      }
+
+      function equals() {
+        var full = expression;
+        if (current !== "" && current !== "Error" && !isOperator(lastCharOf(full) || "")) {
+          full += current;
+        } else if (current !== "" && current !== "Error") {
+          full += current;
+        }
+        if (full === "" || isOperator(full.slice(-1))) full = full.slice(0, -1);
+        if (full === "") return;
+        try {
+          var result = evaluate(full);
+          if (!isFinite(result)) { showError("Error"); return; }
+          expressionEl.textContent = full + " =";
+          current = formatNumber(result);
+          expression = "";
+          justEvaluated = true;
+          resultEl.textContent = current;
+          resultEl.scrollLeft = resultEl.scrollWidth;
+        } catch (e) {
+          if (e.message === "div0") showError("Can't divide by 0");
+          else showError("Error");
+        }
+      }
+
+      function lastCharOf(s) { return s.slice(-1); }
+
+      // Button clicks
+      var keys = document.querySelectorAll("button.key");
+      for (var k = 0; k < keys.length; k++) {
+        keys[k].addEventListener("click", function () {
+          var v = this.getAttribute("data-value");
+          var a = this.getAttribute("data-action");
+          if (a === "clear") clearAll();
+          else if (a === "backspace") backspace();
+          else if (a === "percent") inputPercent();
+          else if (a === "equals") equals();
+          else if (v === ".") inputDot();
+          else if (isOperator(v)) inputOperator(v);
+          else inputDigit(v);
+        });
+      }
+
+      // Keyboard support
+      document.addEventListener("keydown", function (e) {
+        var key = e.key;
+        var btn = null;
+        if (key >= "0" && key <= "9") { inputDigit(key); btn = document.querySelector('[data-value="' + key + '"]'); }
+        else if (key === "." || key === ",") { inputDot(); btn = document.querySelector('[data-value="."]'); }
+        else if (key === "+" || key === "-" || key === "*" || key === "/") { e.preventDefault(); inputOperator(key); btn = document.querySelector('[data-value="' + key + '"]'); }
+        else if (key === "Enter" || key === "=") { e.preventDefault(); equals(); btn = document.querySelector('[data-action="equals"]'); }
+        else if (key === "Backspace") { backspace(); btn = document.querySelector('[data-action="backspace"]'); }
+        else if (key === "Escape" || key.toLowerCase() === "c") { clearAll(); btn = document.querySelector('[data-action="clear"]'); }
+        else if (key === "%") { inputPercent(); btn = document.querySelector('[data-action="percent"]'); }
+        if (btn) {
+          btn.classList.add("pressed");
+          setTimeout(function () { btn.classList.remove("pressed"); }, 120);
+        }
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>
