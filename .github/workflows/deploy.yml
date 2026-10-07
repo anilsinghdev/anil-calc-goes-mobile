@@ -29,10 +29,19 @@ jobs:
       - name: Install dependencies
         run: npm ci || npm install
 
-      - name: Build
+      - name: Build app
         run: npm run build
         env:
           VITE_BASE_PATH: /anil-calc-goes-mobile/
+
+      - name: Prepare static site
+        run: |
+          # The calculator is a fully self-contained static page.
+          # Publish it at the site root so it works at
+          # https://<user>.github.io/anil-calc-goes-mobile/
+          mkdir -p dist-pages
+          cp public/calculator/index.html dist-pages/index.html
+          touch dist-pages/.nojekyll
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
@@ -40,7 +49,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: dist
+          path: dist-pages
 
   deploy:
     environment:
